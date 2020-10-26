@@ -1,5 +1,9 @@
 export NASM ?= nasm
 
-export NATIVE_CC := $(or $(CC),$(CC),cc)
+export OBJCOPY ?= x86_64-elf-objcopy
 
-export NATIVE_CFLAGS := -std=c99
+export NATIVE_CC := $(or $(CC),$(CC),cc)
+export NATIVE_CFLAGS := -std=c99 -Wall -Wextra
+
+export TARGET_CC := x86_64-elf-gcc
+export TARGET_CFLAGS := -std=c99 -Wall -Wextra
