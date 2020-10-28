@@ -2,12 +2,7 @@
 
 set -e
 
-export TARGET=x86_64-elf
-
 SCRIPT_PATH=$(readlink -f $(dirname "$0"))
-export PREFIX=$SCRIPT_PATH/x86_64-elf
-
-export PATH="$PREFIX/bin:$PATH"
 
 BINUTILS_VERSION=2.35.1
 GCC_VERSION=10.2.0
@@ -44,16 +39,22 @@ else
     echo
 fi
 
-mkdir -p build-binutils
-pushd build-binutils
+# Build for the i386-elf target.
+
+export TARGET=i386-elf
+export PREFIX=$SCRIPT_PATH/$TARGET
+export PATH="$PREFIX/bin:$PATH"
+
+mkdir -p build-binutils-$TARGET
+pushd build-binutils-$TARGET
     ../binutils-$BINUTILS_VERSION/configure --prefix=$PREFIX --target=$TARGET \
         --with-sysroot --disable-nls --disable-werror
     make -j $JOBS
     make install
 popd
 
-mkdir -p build-gcc
-pushd build-gcc
+mkdir -p build-gcc-$TARGET
+pushd build-gcc-$TARGET
     ../gcc-$GCC_VERSION/configure --target=$TARGET --prefix="$PREFIX" \
         --disable-nls --enable-languages=c --without-headers
     make all-gcc -j $JOBS
@@ -62,7 +63,32 @@ pushd build-gcc
     make install-target-libgcc
 popd
 
-rm -rf build-binutils
-rm -rf build-gcc
+rm -rf build-binutils-$TARGET
+rm -rf build-gcc-$TARGET
 
-echo $PREFIX
+# Build for the x86_64-elf target.
+
+export TARGET=x86_64-elf
+export PREFIX=$SCRIPT_PATH/$TARGET
+export PATH="$PREFIX/bin:$PATH"
+
+mkdir -p build-binutils-$TARGET
+pushd build-binutils-$TARGET
+    ../binutils-$BINUTILS_VERSION/configure --prefix=$PREFIX --target=$TARGET \
+        --with-sysroot --disable-nls --disable-werror
+    make -j $JOBS
+    make install
+popd
+
+mkdir -p build-gcc-$TARGET
+pushd build-gcc-$TARGET
+    ../gcc-$GCC_VERSION/configure --target=$TARGET --prefix="$PREFIX" \
+        --disable-nls --enable-languages=c --without-headers
+    make all-gcc -j $JOBS
+    make all-target-libgcc -j $JOBS
+    make install-gcc
+    make install-target-libgcc
+popd
+
+rm -rf build-binutils-$TARGET
+rm -rf build-gcc-$TARGET
