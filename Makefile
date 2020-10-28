@@ -1,30 +1,31 @@
 include make/options.mk
-include make/tools.mk
 include make/utils.mk
 
 export ROOT_DIR  := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 export BUILD_DIR := $(ROOT_DIR)/build-$(PROFILE)
 export TOOLS_DIR := $(ROOT_DIR)/build-$(PROFILE)/tools
+export LIBS_DIR  := $(ROOT_DIR)/build-$(PROFILE)/libraries
 
-export PATH := "$(PATH):$(ROOT_DIR)/toolchain/x86_64-elf/bin"
+include make/tools.mk
 
 VERSION := 0.1.0
 DISK_IMAGE := $(BUILD_DIR)/berry-os-$(VERSION).img
 
 .PHONY: all clean \
-	layer1 layer2 layer3 \
-	tools disk-image bootloader \
+	layer1 libstdc \
+	layer2 bootloader \
+	layer3 \
+	tools disk-image \
 	toolchain qemu
 
 all: disk-image
 
 clean:
-	rm -r $(ROOT_DIR)/build-debug
-	rm -r $(ROOT_DIR)/build-release
+	rm -r $(ROOT_DIR)/build-$(PROFILE)
 
-layer1: bootloader
+layer1: libstdc
 
-layer2: layer1
+layer2: layer1 bootloader
 
 layer3: layer2
 
@@ -40,6 +41,9 @@ disk-image: layer3 tools
 
 bootloader:
 	$(MAKE) -C $(ROOT_DIR)/bootloader all
+
+libstdc:
+	$(MAKE) -C $(ROOT_DIR)/libstdc all
 
 toolchain:
 	$(ROOT_DIR)/toolchain/install.sh
